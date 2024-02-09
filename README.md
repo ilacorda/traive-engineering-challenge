@@ -28,10 +28,10 @@ The project follows a standard Go project layout with separate directories for t
 
 - **`/api`**: Contains the API handlers and routes for managing transactions.
 - **`/config`**: Includes the application configuration settings and environment variables.
-- **`/domain`**: Contains the domain models and business logic for managing transactions. 
+- **`/domain`**: Contains the domain model and business logic for managing transactions. 
 - **`/repository/model`**: Contains the database model and repository for interacting with the database. It also includes mappings between the domain and database models.
 - **`/repository/postgres`**: Contains the PostgreSQL repository for handling database operations.
-- **`/repository/filter`**: Contains the filter model and repository for handling filtering operations.
+- **`/repository/filter`**: Handles filtering options 
 - **`/service`**: Contains the service layer for handling business logic and data operations.
 - **`/support`**: Contains utility functions and helper methods used for testing purposes.
 - **`/cmd`**: It includes `main.go` that is the entry point of the application that initializes the server and routes.
@@ -49,7 +49,7 @@ Some References for the project structure:
 ## Prerequisites
 Pre-requisites to run the application are as follow: 
 
-- Go (version 1.x)
+- Go (version 1.x) - currently using 1.21
 - PostgreSQL
 - Docker (for containerized setup)
 - Local Database Setup and Testing
@@ -98,11 +98,13 @@ Once the application is running, it will be accessible at `http://localhost:8080
 
 ## Running Tests
 
-To run the automated tests for the application, execute the following command:
+To run the unit tests for the application, execute the following command:
 
 ```sh
 make test
 ```
+
+Please note that currently the projects only have unit tests, and no integration tests need implementing.
 
 ## Additional Commands
 
@@ -138,7 +140,7 @@ app:
 ```
 
 ## Customizing Environment Variables
-To customize, you can modify the value directly in docker-compose.yml or use a .env file with Docker Compose to define DATABASE_URL.
+To customize, you can modify the value directly in `docker-compose.yml` or use a `.env file` with Docker Compose to define DATABASE_URL.
 
 ### Interacting with Endpoints
 
