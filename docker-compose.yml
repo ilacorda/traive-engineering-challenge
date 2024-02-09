@@ -1,0 +1,23 @@
+version: "3.9"
+services:
+  postgres:
+    image: postgres:12.5
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: transactions-app_development
+    ports:
+      - "5432:5432"
+    volumes:
+      - data:/var/lib/postgresql/data
+      - ./postgres-init:/docker-entrypoint-initdb.d
+  app:
+    build: .
+    environment:
+      - DATABASE_URL=postgresql://postgres:password@postgres:5432/transactions-app_development?sslmode=disable
+    depends_on:
+      - postgres
+
+volumes:
+  data:
+    driver: local
