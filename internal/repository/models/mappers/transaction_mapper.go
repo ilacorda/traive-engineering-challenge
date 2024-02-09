@@ -56,7 +56,7 @@ func ConvertTransactionToDomainList(models []*models.Transaction) []domain.Trans
 	return domainList
 }
 
-// TODO move this to a utility package
+// ValidateUUID TODO [Improvement - code organisation] move this to a utility package
 // ValidateUUID validates a UUID string and returns a UUID object.
 func ValidateUUID(value string) (uuid.UUID, error) {
 	id, err := uuid.Parse(value)

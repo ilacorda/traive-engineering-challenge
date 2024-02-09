@@ -17,11 +17,13 @@ import (
 	"traive-engineering-challenge/internal/support"
 )
 
-var endpoint = "/v1/transactions"
+const (
+	InternalServerErrorMsg = "internal server error"
+	Endpoint               = "/v1/transactions"
+	ErrWrongStatusCodeMsg  = "handler returned wrong status code: got %v want %v"
+)
 
-const internalServerErrorMsg = "internal server error"
-
-// TODO write helper functions to reduce code duplication
+// TODO [Improvement - Refactoring] write helper functions to reduce code duplication
 // in order to check setup the request as well as check the response in both tests
 func TestCreateTransaction(t *testing.T) {
 	ctrl := gomock.NewController(t)
@@ -55,7 +57,7 @@ func TestCreateTransaction(t *testing.T) {
 				mockService.EXPECT().CreateTransaction(gomock.Any(), gomock.Any()).Return(&domain.Transaction{}, nil)
 			},
 			wantStatusCode: http.StatusCreated,
-			wantResponse:   map[string]string{"message": "Transaction created successfully"},
+			wantResponse:   map[string]string{Message: support.MsgTransactionCreatedSuccessfully},
 		},
 		{
 			name: "it returns bad request when the request body is invalid",
@@ -63,7 +65,7 @@ func TestCreateTransaction(t *testing.T) {
 			prepareService: func() {
 			},
 			wantStatusCode: http.StatusBadRequest,
-			wantResponse:   httperrors.NewHTTPError("Failed to decode request body", http.StatusBadRequest),
+			wantResponse:   httperrors.NewHTTPError(support.ErrFailedToDecodeRequest, http.StatusBadRequest),
 		},
 		{
 			name: "it returns internal server error",
@@ -75,10 +77,10 @@ func TestCreateTransaction(t *testing.T) {
 				amount,
 			),
 			prepareService: func() {
-				mockService.EXPECT().CreateTransaction(gomock.Any(), gomock.Any()).Return(nil, errors.New(internalServerErrorMsg))
+				mockService.EXPECT().CreateTransaction(gomock.Any(), gomock.Any()).Return(nil, errors.New(InternalServerErrorMsg))
 			},
 			wantStatusCode: http.StatusInternalServerError,
-			wantResponse:   httperrors.NewHTTPError("Failed to create transaction", http.StatusInternalServerError),
+			wantResponse:   httperrors.NewHTTPError(support.ErrFailedToCreateTransaction, http.StatusInternalServerError),
 		},
 	}
 
@@ -88,10 +90,10 @@ func TestCreateTransaction(t *testing.T) {
 
 			body, err := json.Marshal(tc.body)
 			if err != nil {
-				t.Fatalf("Failed to marshal request body: %v", err)
+				t.Fatalf(support.ErrFailedToMarshalRequestBody, err)
 			}
 
-			req, err := http.NewRequest("POST", endpoint, bytes.NewBuffer(body))
+			req, err := http.NewRequest(http.MethodPost, Endpoint, bytes.NewBuffer(body))
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -103,22 +105,22 @@ func TestCreateTransaction(t *testing.T) {
 			handler.ServeHTTP(rr, req)
 
 			if status := rr.Code; status != tc.wantStatusCode {
-				t.Errorf("handler returned wrong status code: got %v want %v", status, tc.wantStatusCode)
+				t.Errorf(ErrWrongStatusCodeMsg, status, tc.wantStatusCode)
 			}
 
 			var actualResponse map[string]interface{}
 			if err := json.NewDecoder(rr.Body).Decode(&actualResponse); err != nil {
-				t.Fatalf("Failed to decode response body: %v", err)
+				t.Fatalf(support.ErrFailedToEncodeResponse+":"+"%v", err)
 			}
 
 			expectedResponseJSON, err := json.Marshal(tc.wantResponse)
 			if err != nil {
-				t.Fatalf("Failed to marshal expected response: %v", err)
+				t.Fatalf(support.ErrFailedToMarshalExpectedResponse, tc.name, err)
 			}
 
 			var expectedResponse map[string]interface{}
 			if err := json.Unmarshal(expectedResponseJSON, &expectedResponse); err != nil {
-				t.Fatalf("Failed to unmarshal expected response JSON: %v", err)
+				t.Fatalf(support.ErrFailedToUnmarshalExpectedResponse, tc.name, err)
 			}
 
 			// TODO use cmp.Diff to compare actualResponse and expectedResponse
@@ -189,10 +191,10 @@ func TestListTransactions(t *testing.T) {
 			name:        "Failed listing due to service error",
 			queryParams: map[string]string{},
 			prepareService: func(mockSvc *mocks.MockTransactionService) {
-				mockSvc.EXPECT().ListTransactions(gomock.Any(), gomock.Any()).Return(nil, errors.New("service error"))
+				mockSvc.EXPECT().ListTransactions(gomock.Any(), gomock.Any()).Return(nil, errors.New(InternalServerErrorMsg))
 			},
 			wantStatusCode: http.StatusInternalServerError,
-			wantResponse:   httperrors.NewHTTPError(support.ErrFailedToListTransactions, http.StatusInternalServerError),
+			wantResponse:   httperrors.NewHTTPError(support.ErrFailedToRetrieveTransactions, http.StatusInternalServerError),
 		},
 	}
 
@@ -200,7 +202,7 @@ func TestListTransactions(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			tc.prepareService(mockService)
 
-			req, err := http.NewRequest("GET", "/transactions", nil)
+			req, err := http.NewRequest(http.MethodGet, Endpoint, nil)
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -219,15 +221,15 @@ func TestListTransactions(t *testing.T) {
 			filterObj := &filter.TransactionFilter{}
 			for _, param := range tc.queryParams {
 				switch {
-				case param == "origin" && tc.queryParams[param] != "":
+				case param == Origin && tc.queryParams[param] != "":
 					filter.WithOrigin(tc.queryParams[param])(filterObj)
-				case param == "transactionType" && tc.queryParams[param] != "":
+				case param == TransactionType && tc.queryParams[param] != "":
 					filter.WithTransactionType(tc.queryParams[param])(filterObj)
 				}
 			}
 
 			if status := rr.Code; status != tc.wantStatusCode {
-				t.Errorf("handler returned wrong status code: got %v want %v", status, tc.wantStatusCode)
+				t.Errorf(ErrWrongStatusCodeMsg, status, tc.wantStatusCode)
 			}
 
 			var actualResponse interface{}
@@ -236,12 +238,12 @@ func TestListTransactions(t *testing.T) {
 			}
 			expectedResponseJSON, err := json.Marshal(tc.wantResponse)
 			if err != nil {
-				t.Fatalf("Failed to marshal expected response for %s: %v", tc.name, err)
+				t.Fatalf(support.ErrFailedToMarshalExpectedResponse, tc.name, err)
 			}
 
 			var expectedResponse interface{}
 			if err := json.Unmarshal(expectedResponseJSON, &expectedResponse); err != nil {
-				t.Fatalf("Failed to unmarshal expected response JSON for %s: %v", tc.name, err)
+				t.Fatalf(support.ErrFailedToUnmarshalExpectedResponse, tc.name, err)
 			}
 
 			// TODO use cmptools to compare actualResponse and expectedResponse

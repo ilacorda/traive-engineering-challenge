@@ -12,19 +12,6 @@ import (
 	"traive-engineering-challenge/internal/support"
 )
 
-var (
-	transactionSchema = []string{"id", "user_id", "origin", "transaction_type", "amount", "created_at"}
-
-	transactionIDOne = "73b2228a-be4a-43dd-8c07-4668e59da688"
-	transactionIDTwo = "f3b2228a-be4a-43dd-8c07-4668e59da688"
-
-	buildPopulatedTransactions = func() *sqlmock.Rows {
-		return sqlmock.NewRows(transactionSchema).
-			AddRow(transactionIDOne, uuid.NewString(), "desktop-web", 2, time.Now()).
-			AddRow(transactionIDTwo, uuid.NewString(), "web", 1, 1000, time.Now())
-	}
-)
-
 const (
 	InsertTransactionQuery = `^INSERT INTO "transactions"`
 	GetTransactionsQuery   = `^SELECT FROM "transactions"`
@@ -32,6 +19,7 @@ const (
 
 type queryMock func(sqlmock.Sqlmock)
 
+// TODO [Improvements - test coverage] - Add tests for ListTransactions repository implementation
 func TestRepository_CreateTransaction(t *testing.T) {
 	t.Parallel()
 

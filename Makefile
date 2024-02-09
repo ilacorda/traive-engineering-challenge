@@ -38,3 +38,6 @@ test:
 
 gofumpt:
 	gofumpt -w -l .
+
+swagger-gen:
+	swag init -g cmd/main.go

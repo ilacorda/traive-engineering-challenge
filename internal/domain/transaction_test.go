@@ -1,18 +1,17 @@
 package domain
 
 import (
-	"testing"
-	"time"
-
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
+	"testing"
+	"time"
 )
 
 func TestTransaction(t *testing.T) {
 	t.Run("A valid Transaction Domain", func(t *testing.T) {
 		id := uuid.New()
 		userID := uuid.New()
-		origin := "web"
+		origin := "desktop-web"
 		transactionType := TransactionTypeCredit
 		amount := int64(1000)
 		createdAt := time.Now()
@@ -38,13 +37,12 @@ func TestTransaction(t *testing.T) {
 		transaction := Transaction{
 			ID:              uuid.New(),
 			UserID:          uuid.New(),
-			Origin:          "web",
-			TransactionType: TransactionType(3), // invalid transaction type
+			Origin:          "desktop-web",
+			TransactionType: TransactionType(3),
 			Amount:          int64(1000),
 			CreatedAt:       time.Now(),
 		}
 
-		// Check if the transaction type is invalid using the IsValidTransactionType function
 		valid := IsValidTransactionType(transaction.TransactionType)
 
 		assert.False(t, valid, "TransactionType should be invalid")

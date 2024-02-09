@@ -1,0 +1,109 @@
+basePath: /v1
+definitions:
+  domain.Transaction:
+    properties:
+      amount:
+        type: integer
+      created_at:
+        type: string
+      id:
+        type: string
+      origin:
+        type: string
+      transaction_type:
+        allOf:
+        - $ref: '#/definitions/domain.TransactionType'
+        enum:
+        - 0
+        - 1
+        - 2
+      user_id:
+        type: string
+    required:
+    - amount
+    - id
+    - transaction_type
+    - user_id
+    type: object
+  domain.TransactionType:
+    enum:
+    - 0
+    - 1
+    - 2
+    type: integer
+    x-enum-varnames:
+    - TransactionTypeUnspecified
+    - TransactionTypeCredit
+    - TransactionTypeDebit
+  httperrors.HTTPError:
+    properties:
+      message:
+        type: string
+    type: object
+info:
+  contact: {}
+  description: API for creating and retrieving transactions
+  title: Transaction API
+  version: "1.0"
+paths:
+  /v1/transactions:
+    get:
+      description: Retrieves a list of transactions based on filter criteria
+      parameters:
+      - description: Page number for pagination
+        in: query
+        name: page
+        type: integer
+      - description: Number of items per page for pagination
+        in: query
+        name: pageSize
+        type: integer
+      - description: Filter by transaction origin
+        in: query
+        name: origin
+        type: string
+      - description: Filter by transaction type
+        in: query
+        name: transactionType
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/domain.Transaction'
+            type: array
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/httperrors.HTTPError'
+      summary: List transactions
+      tags:
+      - transactions
+    post:
+      consumes:
+      - application/json
+      description: Creates a new transaction in the system
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/domain.Transaction'
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/httperrors.HTTPError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/httperrors.HTTPError'
+      summary: Add a new transaction
+      tags:
+      - transactions
+swagger: "2.0"

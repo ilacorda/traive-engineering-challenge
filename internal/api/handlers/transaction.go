@@ -3,7 +3,6 @@ package handlers
 import (
 	"context"
 	"encoding/json"
-	"log"
 	"net/http"
 	"strconv"
 	"traive-engineering-challenge/internal/api/handlers/httperrors"
@@ -18,31 +17,55 @@ const (
 	ApplicationJSON = "application/json"
 	PageKey         = "page"
 	PageSizeKey     = "pageSize"
+	Origin          = "origin"
+	TransactionType = "transactionType"
+	Message         = "message"
 )
 
+// CreateTransaction godoc
+// @Summary Add a new transaction
+// @Description Creates a new transaction in the system
+// @tags transactions
+// @Accept json
+// @Produce json
+// @Success 200 {array} domain.Transaction
+// @Failure 500 {object} httperrors.HTTPError
+// @Failure 400 {object} httperrors.HTTPError
+// @Router /v1/transactions [post]
 func CreateTransaction(app service.TransactionService) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var transaction domain.Transaction
 		if err := json.NewDecoder(r.Body).Decode(&transaction); err != nil {
-			sendError(w, httperrors.NewHTTPError("Failed to decode request body", http.StatusBadRequest))
+			sendError(w, httperrors.NewHTTPError(support.ErrFailedToDecodeRequest, http.StatusBadRequest))
 			return
 		}
 
 		_, err := app.CreateTransaction(r.Context(), transaction)
 		if err != nil {
-			log.Printf("Error calling CreateTransaction: %v\n", err)
-			sendError(w, httperrors.NewHTTPError("Failed to create transaction", http.StatusInternalServerError))
+			sendError(w, httperrors.NewHTTPError(support.ErrFailedToCreateTransaction, http.StatusInternalServerError))
 			return
 		}
 
 		w.Header().Set(ContentType, ApplicationJSON)
 		w.WriteHeader(http.StatusCreated)
-		if err := json.NewEncoder(w).Encode(map[string]string{"message": "Transaction created successfully"}); err != nil {
-			sendError(w, httperrors.NewHTTPError("Failed to encode response", http.StatusInternalServerError))
+		if err := json.NewEncoder(w).Encode(map[string]string{Message: support.MsgTransactionCreatedSuccessfully}); err != nil {
+			sendError(w, httperrors.NewHTTPError(support.ErrFailedToEncodeResponse, http.StatusInternalServerError))
 		}
 	}
 }
 
+// ListTransactions godoc
+// @Summary List transactions
+// @Description Retrieves a list of transactions based on filter criteria
+// @tags transactions
+// @Produce json
+// @Param page query int false "Page number for pagination"
+// @Param pageSize query int false "Number of items per page for pagination"
+// @Param origin query string false "Filter by transaction origin"
+// @Param transactionType query string false "Filter by transaction type"
+// @Success 200 {array} domain.Transaction
+// @Failure 500 {object} httperrors.HTTPError
+// @Router /v1/transactions [get]
 func ListTransactions(app service.TransactionService) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// Extract 'page' and 'pageSize' from query parameters
@@ -57,7 +80,7 @@ func ListTransactions(app service.TransactionService) http.HandlerFunc {
 
 		transactions, err := app.ListTransactions(ctxWithPagination, opts...)
 		if err != nil {
-			sendError(w, httperrors.NewHTTPError(support.ErrFailedToListTransactions, http.StatusInternalServerError))
+			sendError(w, httperrors.NewHTTPError(support.ErrFailedToRetrieveTransactions, http.StatusInternalServerError))
 			return
 		}
 
@@ -70,8 +93,8 @@ func ListTransactions(app service.TransactionService) http.HandlerFunc {
 
 func extractAndBuildFilterParams(r *http.Request) []filter.Options {
 	// Extract filter parameters
-	origin := r.URL.Query().Get("origin")
-	transactionType := r.URL.Query().Get("transactionType")
+	origin := r.URL.Query().Get(Origin)
+	transactionType := r.URL.Query().Get(TransactionType)
 
 	// Create filter options based on the query parameters
 	var opts []filter.Options

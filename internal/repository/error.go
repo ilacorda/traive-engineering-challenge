@@ -1,6 +1,6 @@
 package repository
 
-// TODO Use NotFoundError to handle errors in the repository layer and propagate them to the api layer
+// TODO [Improvements - error handling] Use NotFoundError to handle errors in the repository layer and propagate them to the api layer
 type NotFoundError struct {
 	message string
 }

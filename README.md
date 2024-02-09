@@ -3,21 +3,24 @@
 ## Project Overwiew
 
 This project was developed as part of the technical challenge for the Traive Engineering interview. The goal is to build a RESTful API in Go (Golang), allowing the management of user transactions. The API will enable the creation and listing of transactions with features like pagination and filtering.
-The project has been time-boxed to a maximum of 4 hours in order to showcase the candidate's ability to deliver an application within a limited timeframe.
+The project has been time-boxed to a maximum of 5 hours in order to showcase the candidate's ability to deliver an application within a limited timeframe.
 
 ## Design Assumptions
 
 - **Framework**: The project uses the Gin web framework for its lightweight nature and efficient performance in building RESTful APIs.
 - **Database**: PostgreSQL is chosen for its reliability and feature-rich support for transactional data management.
-- **Transactions**: Each transaction includes details such as ID, origin, user ID, amount, operation type (credit/debit), and creation timestamp. Additional attributes have not been considered at this stage.
+- **Transactions**: Each transaction includes details such as `ID`, `origin`, `user ID`, `amount`, `transaction type` (credit/debit), and `createdAt` timestamp. Additional attributes have not been considered at this stage.
+- **Pagination**: The API supports pagination for listing transactions, allowing users to navigate through large datasets efficiently.
+- **Filtering**: The API supports filtering transactions based on `origin` and `transaction type`, providing users with the flexibility to query specific records.
 
 ## Technical Challenge Requirements
 
 - Develop an API to manage transactions with capabilities to create and list transactions.
 - Ensure the API supports pagination and filtering for listing transactions.
-- Aim for a production-ready application with considerations for project structure, code organization, and technology choices.
+- Aim for a production-ready application in terms of project structure, code organization, technology choices and best practices. 
 - Incorporate error handling and robust application behavior analysis strategies.
-- Utilize a consistent naming convention and maintain code readability.
+- Utilise a consistent naming convention and maintain code readability.
+- Include comprehensive documentation and instructions for running the application as well as Swagger documentation for the API endpoints.
 
 ## Project Structure
 
@@ -25,14 +28,17 @@ The project follows a standard Go project layout with separate directories for t
 
 - **`/api`**: Contains the API handlers and routes for managing transactions.
 - **`/config`**: Includes the application configuration settings and environment variables.
-- **`/repository`**: Contains the database schema and migration scripts for setting up the PostgreSQL database.
-- **`/models`**: Includes the data models and database access layer for managing transactions.
-- **`/utils`**: Contains utility functions and helper methods used across the application.
-- **`main.go`**: The entry point of the application that initializes the server and routes.
+- **`/domain`**: Contains the domain models and business logic for managing transactions. 
+- **`/repository/model`**: Contains the database model and repository for interacting with the database. It also includes mappings between the domain and database models.
+- **`/repository/postgres`**: Contains the PostgreSQL repository for handling database operations.
+- **`/repository/filter`**: Contains the filter model and repository for handling filtering operations.
+- **`/service`**: Contains the service layer for handling business logic and data operations.
+- **`/support`**: Contains utility functions and helper methods used for testing purposes.
+- **`/cmd`**: It includes `main.go` that is the entry point of the application that initializes the server and routes.
 - **`Dockerfile`**: The Docker configuration file for building the application image.
 - **`docker-compose.yml`**: The Docker Compose configuration for setting up the PostgreSQL database.
-- ** `postgresql`**: The directory for the init script for the PostgreSQL database.
-- **`go.mod` and `go.sum`**: The Go module files for managing dependencies.
+- **`/postgresql`**: The directory for the init script for the PostgreSQL database.
+- **`/docs`**: The directory for the swagger documentation.
 - **`Makefile`**: The Makefile for defining common tasks and commands for the application.
 - **`README.md`**: The project documentation and instructions for running the application.
 
@@ -59,9 +65,9 @@ In terms of Docker, the following are required:
 
 To start the PostgreSQL database using Docker Compose, run the following command:
 
-    ```sh
-    docker-compose up -d postgres
-    ```
+```sh
+docker-compose up -d postgres
+```
 
    This will initialize and start a PostgreSQL container in detached mode.
 
@@ -77,9 +83,9 @@ docker-compose down
 
 Build the application binary and start the application using the Makefile:
 
-    ```sh
-    make run
-    ```
+```sh
+make run
+```
 
    This command performs the following actions:
     - Ensures the database container is up.
@@ -129,7 +135,7 @@ Alternatively, in `docker-compose.yml`, the database URL is set as an environmen
 app:
   environment:
     - DATABASE_URL=postgresql://postgres:password@postgres:5432/transactions-app_development?sslmode=disable
-   ```
+```
 
 ## Customizing Environment Variables
 To customize, you can modify the value directly in docker-compose.yml or use a .env file with Docker Compose to define DATABASE_URL.
@@ -145,9 +151,19 @@ Swagger provides an interactive interface where you can:
 
 This documentation is useful for developers who want to explore and test the API without having to refer to the codebase or external documentation.
 
+The swagger docs are available at `http://localhost:8080/swagger/index.html`. and they were already generated using the `swag` package, by running the following command in the root of the project: 
 
+```
+swag init -g main.go 
+```
+and saved in the `docs` folder.
 
-## Future Improvements
+Alternatively, you can use the Makefile to generate the swagger docs by running the following command:
+
+```sh
+make swagger-gen
+```
+
 ## Future Improvements for Production Readiness
 
 ### 1. Improve Testing Strategy
@@ -159,25 +175,32 @@ This documentation is useful for developers who want to explore and test the API
 ### 3. Implement Robust Pagination Mechanism
 - Introduce a more robust and reliable mechanism for pagination to efficiently handle large datasets and improve the overall performance of the API.
 
-### 4. Support CRUD Operations
+### 4. Use Migration Tools
+- Integrate database migration tools to manage schema changes and versioning, ensuring consistent and reliable database updates across different environments. For example, using tools like Goose or Golang Migrate.
+Currently, the project loads the schema and data using the `init.sql` file in the `postgresql` directory.
+
+### 5. Use Structured Logging
+- Integrate a structured logging library to capture detailed application logs, enabling developers to analyze and troubleshoot issues more effectively.
+
+### 6. Support CRUD Operations
 - Add support for updating and deleting transactions, enabling users to modify or remove existing records as needed.
 
-### 5. Authentication and Authorization
+### 7. Authentication and Authorization
 - Implement user authentication and authorization mechanisms to secure the API endpoints, ensuring that only authorized users can access sensitive data and perform specific actions.
 
-### 6. Enhance Validation and Error Handling
+### 8. Enhance Validation and Error Handling
 - Improve the validation and error handling mechanisms to provide more detailed and user-friendly responses, helping users understand and resolve issues more effectively.
 
-### 7. Logging and Monitoring
-- Integrate logging and monitoring tools to track application behavior and performance, enabling developers to identify and address potential issues in real-time.
+### 9. Logging and Monitoring
+- Integrate logging and monitoring tools to track application behavior and performance, enabling developers to identify and address potential issues in real-time. For example, instrumenting the application with OpenTelemetry to capture telemetry data and trace requests and generate custom metrics.
 
-### 8. Caching and Performance Optimization
+### 10. Caching and Performance Optimization
 - Implement caching mechanisms and performance optimization strategies to improve the API's responsiveness and reduce latency, enhancing the overall user experience.
 
-### 9. Testing and CI/CD Automation
-- Expand the test suite and integrate continuous integration and deployment pipelines to automate the development workflow, ensuring consistent code quality and reliable deployments.
+### 11. Testing and CI/CD Automation
+- Integrate continuous integration and deployment pipelines to automate the development workflow, ensuring consistent code quality and reliable deployments.
 
-### 10. Container Orchestration
+### 11. Container Orchestration
 - Explore container orchestration platforms like Kubernetes for deploying and managing the application in a production environment, providing scalability, resilience, and easier management of resources.
 
 These improvements will help make the application more robust, secure, and scalable, making it ready for production use in demanding environments.

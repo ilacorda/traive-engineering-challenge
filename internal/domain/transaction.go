@@ -29,6 +29,8 @@ func (s TransactionType) String() string {
 	return [...]string{"TYPE_UNSPECIFIED", "CREDIT TRANSACTION", "DEBIT TRANSACTION"}[s]
 }
 
+// Transaction represents a money transaction
+// swagger:domain Transaction
 type Transaction struct {
 	ID              uuid.UUID       `json:"id" validate:"required"`
 	UserID          uuid.UUID       `json:"user_id" validate:"required"`

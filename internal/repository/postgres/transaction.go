@@ -10,7 +10,6 @@ import (
 	"traive-engineering-challenge/internal/repository/filter"
 	"traive-engineering-challenge/internal/repository/models"
 	"traive-engineering-challenge/internal/repository/models/mappers"
-	"traive-engineering-challenge/internal/support"
 )
 
 const TransactionModelTableExpr = "transactions"
@@ -79,7 +78,7 @@ func (r *Repository) ListTransactions(ctx context.Context, filters ...filter.Opt
 
 	err := transactionsFilter.Query.Offset(offset).Limit(pageSize).Scan(ctx)
 	if err != nil {
-		return nil, errors.New(support.ErrFailedToRetrieveTransactions)
+		return nil, errors.New("failed to list transactions")
 	}
 
 	if len(transactionModel) == 0 {

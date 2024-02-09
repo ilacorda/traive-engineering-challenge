@@ -2,6 +2,7 @@ package config
 
 import (
 	"github.com/spf13/viper"
+	"traive-engineering-challenge/internal/support"
 )
 
 type Config struct {
@@ -11,11 +12,11 @@ type Config struct {
 func LoadConfig() (*Config, error) {
 	viper.AutomaticEnv()
 
-	viper.SetDefault("DATABASE_URL", "postgresql://postgres:password@localhost:5432/transactions-app_development?sslmode=disable")
+	viper.SetDefault(support.DatabaseURL, "postgresql://postgres:password@localhost:5432/transactions-app_development?sslmode=disable")
 
 	var config Config
 
-	config.DatabaseURL = viper.GetString("DATABASE_URL")
+	config.DatabaseURL = viper.GetString(support.DatabaseURL)
 
 	return &config, nil
 }
