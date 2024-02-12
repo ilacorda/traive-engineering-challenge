@@ -15,12 +15,14 @@ The project has been time-boxed to a maximum of 5 hours in order to showcase the
 
 ## Technical Challenge Requirements
 
-- Develop an API to manage transactions with capabilities to create and list transactions.
+- Develop an API to manage transactions with capabilities to create and list transactions. Please note that as an ORM of choice, we ended up using [[Bun](https://bun.uptrace.dev/)], a lightweight ORM for Go, which is a wrapper around the `pgx` PostgreSQL driver.
 - Ensure the API supports pagination and filtering for listing transactions.
 - Aim for a production-ready application in terms of project structure, code organization, technology choices and best practices. 
 - Incorporate error handling and robust application behavior analysis strategies.
 - Utilise a consistent naming convention and maintain code readability.
 - Include comprehensive documentation and instructions for running the application as well as Swagger documentation for the API endpoints.
+- Implement a Dockerized setup for the application and database, ensuring easy deployment and management.
+- Integrate OpenTelemetry for capturing telemetry data and trace requests, and, not part of this project, generate custom metrics. We just showcased the use of OpenTelemetry to instrument the application's handlers. 
 
 ## Project Structure
 
@@ -71,12 +73,24 @@ docker-compose up -d postgres
 
    This will initialize and start a PostgreSQL container in detached mode.
 
+Alternatively:
+
+```
+make start-db
+```
+
 ### Stopping the Database
 
 To stop the PostgreSQL database container, run the following command:
 
 ```sh
-docker-compose down
+docker-compose down --volumes
+```
+
+Alternatively:
+
+```
+make stop-db
 ```
 
 ### Building and Running the Application

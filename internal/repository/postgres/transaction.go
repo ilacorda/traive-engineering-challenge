@@ -56,8 +56,8 @@ func (r *Repository) ListTransactions(ctx context.Context, filters ...filter.Opt
 
 	transactionsFilter := &filter.TransactionFilter{
 		Query: r.db.NewSelect().
-			ModelTableExpr(TransactionModelTableExpr).
-			Model(&transactionModel),
+			Model(&transactionModel).
+			TableExpr("transactions AS t"), // Use TableExpr to introduce an alias and avoid conflicts with transaction keyword
 	}
 
 	for _, opt := range filters {

@@ -16,7 +16,7 @@ db-up:
 
 .PHONY: db-down
 db-down:
-	$(DC) down
+	$(DC) down --volumes
 
 # Run the application
 .PHONY: run

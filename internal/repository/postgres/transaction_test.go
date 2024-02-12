@@ -12,14 +12,28 @@ import (
 	"traive-engineering-challenge/internal/support"
 )
 
+var (
+	transactionSchema = []string{"id", "user_id", "origin", "transaction_type", "amount", "created_at"}
+
+	transactionIDOne = "73b2228a-be4a-43dd-8c07-4668e59da688"
+	transactionIDTwo = "f3b2228a-be4a-43dd-8c07-4668e59da688"
+
+	buildPopulatedTransactions = func() *sqlmock.Rows {
+		return sqlmock.NewRows(transactionSchema).
+			AddRow(transactionIDOne, uuid.NewString(), support.DesktopWeb, domain.TransactionTypeCredit, 1000, time.Now()).
+			AddRow(transactionIDTwo, uuid.NewString(), support.DesktopWeb, domain.TransactionTypeDebit, 500, time.Now())
+
+	}
+)
+
 const (
 	InsertTransactionQuery = `^INSERT INTO "transactions"`
-	GetTransactionsQuery   = `^SELECT FROM "transactions"`
+	GetTransactionsQuery   = `^SELECT (.+) FROM "transactions"`
 )
 
 type queryMock func(sqlmock.Sqlmock)
 
-// TODO [Improvements - test coverage] - Add tests for ListTransactions repository implementation
+// TODO [Improvements - test coverage] - Improve tests for ListTransactions repository implementation
 func TestRepository_CreateTransaction(t *testing.T) {
 	t.Parallel()
 
@@ -73,6 +87,51 @@ func TestRepository_CreateTransaction(t *testing.T) {
 			}
 
 			require.NoError(t, mock.ExpectationsWereMet())
+		})
+	}
+}
+
+func TestRepository_ListTransactions(t *testing.T) {
+	t.Parallel()
+
+	testData := map[string]struct {
+		setupMocks func(sqlmock.Sqlmock)
+		wantErr    bool
+	}{
+		"happy path - returns list of transactions": {
+			setupMocks: func(mock sqlmock.Sqlmock) {
+				mock.ExpectQuery(GetTransactionsQuery).
+					WillReturnRows(buildPopulatedTransactions())
+			},
+			wantErr: false,
+		},
+		"failure - query fails": {
+			setupMocks: func(mock sqlmock.Sqlmock) {
+				mock.ExpectQuery(GetTransactionsQuery).
+					WillReturnError(fmt.Errorf("query failed"))
+			},
+			wantErr: true,
+		},
+	}
+
+	for name, tc := range testData {
+		t.Run(name, func(t *testing.T) {
+			db, mock, err := sqlmock.New(sqlmock.QueryMatcherOption(sqlmock.QueryMatcherRegexp))
+			require.NoError(t, err)
+
+			repo, err := NewRepository(db)
+			require.NoError(t, err)
+
+			tc.setupMocks(mock)
+
+			_, err = repo.ListTransactions(context.Background())
+			if tc.wantErr {
+				require.Error(t, err)
+			} else {
+				require.NoError(t, err)
+			}
+
+			expectationMet(t, mock)
 		})
 	}
 }

@@ -3,6 +3,9 @@ package handlers
 import (
 	"context"
 	"encoding/json"
+	"go.opentelemetry.io/otel"
+	_ "go.opentelemetry.io/otel"
+	_ "go.opentelemetry.io/otel/trace"
 	"net/http"
 	"strconv"
 	"traive-engineering-challenge/internal/api/handlers/httperrors"
@@ -34,15 +37,23 @@ const (
 // @Router /v1/transactions [post]
 func CreateTransaction(app service.TransactionService) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		// Initialize tracer with the operation name
+		tr := otel.Tracer("CreateTransaction")
+		_, span := tr.Start(r.Context(), "Handling CreateTransaction request")
+		defer span.End()
+
 		var transaction domain.Transaction
 		if err := json.NewDecoder(r.Body).Decode(&transaction); err != nil {
 			sendError(w, httperrors.NewHTTPError(support.ErrFailedToDecodeRequest, http.StatusBadRequest))
+			span.RecordError(err)
 			return
 		}
 
 		_, err := app.CreateTransaction(r.Context(), transaction)
+		defer span.End()
 		if err != nil {
 			sendError(w, httperrors.NewHTTPError(support.ErrFailedToCreateTransaction, http.StatusInternalServerError))
+			span.RecordError(err)
 			return
 		}
 
@@ -50,6 +61,7 @@ func CreateTransaction(app service.TransactionService) http.HandlerFunc {
 		w.WriteHeader(http.StatusCreated)
 		if err := json.NewEncoder(w).Encode(map[string]string{Message: support.MsgTransactionCreatedSuccessfully}); err != nil {
 			sendError(w, httperrors.NewHTTPError(support.ErrFailedToEncodeResponse, http.StatusInternalServerError))
+			span.RecordError(err)
 		}
 	}
 }
@@ -68,6 +80,10 @@ func CreateTransaction(app service.TransactionService) http.HandlerFunc {
 // @Router /v1/transactions [get]
 func ListTransactions(app service.TransactionService) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		tr := otel.Tracer("ListTransactions")
+		_, span := tr.Start(r.Context(), "Handling ListTransactions request")
+		defer span.End()
+
 		// Extract 'page' and 'pageSize' from query parameters
 		page := getQueryParamAsInt(r, PageKey, 1)
 		pageSize := getQueryParamAsInt(r, PageSizeKey, 10)
@@ -81,12 +97,14 @@ func ListTransactions(app service.TransactionService) http.HandlerFunc {
 		transactions, err := app.ListTransactions(ctxWithPagination, opts...)
 		if err != nil {
 			sendError(w, httperrors.NewHTTPError(support.ErrFailedToRetrieveTransactions, http.StatusInternalServerError))
+			span.RecordError(err)
 			return
 		}
 
 		w.WriteHeader(http.StatusOK)
 		if err := json.NewEncoder(w).Encode(transactions); err != nil {
 			sendError(w, httperrors.NewHTTPError(support.ErrFailedToEncodeResponse, http.StatusInternalServerError))
+			span.RecordError(err)
 		}
 	}
 }
